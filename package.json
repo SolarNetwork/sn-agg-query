@@ -1,0 +1,23 @@
+{
+  "name": "sn-agg-query",
+  "version": "1.0.0",
+  "description": "SolarNetwork aggregate query utility.",
+  "keywords": [
+    "solarnetwork"
+  ],
+  "author": "Matt Magoffin <nodejs.com@msqr.us>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SolarNetwork/sn-agg-query.git"
+  },
+  "main": "sn-agg-query.js",
+  "homepage": "http://solarnetwork.github.io/",
+  "bugs": "https://data.solarnetwork.net/jira/",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "colorbrewer": "^0.x",
+    "crypto-js": "^3.x",
+    "d3": "^3.x",
+    "node-getopt": "^0.2.x"
+  }
+}
