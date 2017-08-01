@@ -18,7 +18,7 @@
     "d3-array": "^1.2.0",
     "d3-collection": "^1.0.4",
     "node-getopt": "^0.2.x",
-    "solarnetwork-api-core": "SolarNetwork/sn-api-core-js#develop",
-    "solarnetwork-datum-loader": "SolarNetwork/sn-datum-loader-js"
+    "solarnetwork-api-core": "0.6",
+    "solarnetwork-datum-loader": "0.3"
   }
 }

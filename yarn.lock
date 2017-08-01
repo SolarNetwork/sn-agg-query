@@ -65,20 +65,20 @@ rw@1:
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/rw/-/rw-1.3.3.tgz#3f862dfa91ab766b14885ef4d01124bfda074fb4"
 
-solarnetwork-api-core@SolarNetwork/sn-api-core-js#develop:
-  version "0.5.3-dev.0"
-  resolved "https://codeload.github.com/SolarNetwork/sn-api-core-js/tar.gz/709075250fbb205245395f7ef203ed23b7fb79d3"
+solarnetwork-api-core@0.6:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/solarnetwork-api-core/-/solarnetwork-api-core-0.6.0.tgz#49a0a65aaf6050785346ed1bb15016aab6c50138"
   dependencies:
     crypto-js "^3.1.9-1"
     d3-time-format "^2.0.5"
     uri-js "^3.0.2"
 
-solarnetwork-datum-loader@SolarNetwork/sn-datum-loader-js:
-  version "0.0.1-dev.0"
-  resolved "https://codeload.github.com/SolarNetwork/sn-datum-loader-js/tar.gz/815c53ce5542c9d519d0f78878e7f94e5e52299a"
+solarnetwork-datum-loader@0.3:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/solarnetwork-datum-loader/-/solarnetwork-datum-loader-0.3.0.tgz#47d4bb7eccc6dc9d4c95735e50ed9dcf7fd914bc"
   dependencies:
     d3-request "^1.0.5"
-    solarnetwork-api-core SolarNetwork/sn-api-core-js#develop
+    solarnetwork-api-core "0.6"
 
 uri-js@^3.0.2:
   version "3.0.2"
