@@ -1,31 +1,42 @@
 'use strict';
 
-var d3 = require('d3'),
-	request = require('request'),
+var DatumLoader = require('solarnetwork-datum-loader').DatumLoader,
+	d3array = require('d3-array'),
+	d3collection = require('d3-collection'),
+	sn = require('solarnetwork-api-core'),
 	Getopt = require('node-getopt');
 
 function groupResultsByDate(data) {
-	return d3.nest()
+	return d3collection.nest()
 		.key(function(d) { return d.created; })
-		.sortKeys(d3.ascending)
+		.sortKeys(d3array.ascending)
 		.rollup(function(group) {
-			var grouped = {};
+			var grouped = {},
+				ignore = {};
 			group.forEach(function(datum) {
 				var prop;
 				for ( prop in datum ) {
 					if ( grouped[prop] === undefined ) {
 						// value doesn't exist in grouped result yet
-						grouped[prop] = datum[prop];
+						if ( ignore[prop] === undefined ) {
+							grouped[prop] = datum[prop];
+						}
 					} else if ( prop !== 'nodeId' && typeof datum[prop] === 'number' ) {
 						// add the number value to existing grouped result
 						grouped[prop] += datum[prop];
+					} else if ( grouped[prop] !== datum[prop] ) {
+						// data value changed, remove from aggregate and ignore
+						ignore[prop] = true;
+						delete grouped[prop];
 					}
 				}
 			});
 			return grouped;
 		})
 		.entries(data)
-		.map(function(d) { return d.values; });
+		.map(function(d) {
+			return d.value;
+		});
 }
 
 function csvColumnValue(v) {
@@ -66,8 +77,9 @@ function printCSV(groupedData, columKeysOrder, omitHeader) {
 	return columnOrder;
 }
 
-function query(url, options) {
+function query(query, options) {
 	var rawData = [], columnOrder = [];
+
 	function complete() {
 		var groupedData;
 		if ( rawData.length < 1 ) {
@@ -79,51 +91,69 @@ function query(url, options) {
 		groupedData = groupResultsByDate(rawData);
 		printCSV(groupedData);
 	}
-	function extractOffset(data) {
-		return (data.startingOffset + data.returnedResultCount < data.totalResults
-				? (data.startingOffset + data.returnedResultCount)
-				: 0);
+
+	var urlHelper = new sn.NodeDatumUrlHelper();
+	urlHelper.publicQuery = true;
+
+	var filter = new sn.DatumFilter(sn.urlQuery.urlQueryParse(query));
+	if ( options.node ) {
+		filter.nodeId = options.node;
 	}
-	function executeQuery(offset) {
-		var requestUrl = url;
-		if ( offset > 0 ) {
-			requestUrl += '&offset=' +offset;
+	if ( options.source ) {
+		filter.sourceIds = options.source;
+	}
+	if ( options.start ) {
+		filter.startDate = sn.dateParser(options.start);
+	}
+	if ( options.end ) {
+		filter.endDate = sn.dateParser(options.end);
+	}
+	if ( options.aggregation ) {
+		filter.aggregation = sn.Aggregation.valueOf(options.aggregation);
+	}
+	var loader = new DatumLoader(urlHelper, filter).incremental(true);
+	
+	var promise = new Promise(function(resolve, reject) {
+		if ( options.raw ) {
+			console.error('Saving raw data.');
 		}
-		request({
-			url: requestUrl,
-			json: true
-		}, function(error, response, json) {
-			if ( error || response.statusCode !== 200  || json.success !== true || Array.isArray(json.data.results) === false ) {
-				complete();
+		loader.load(function(error, data, done, page) {
+			if ( error ) {
+				console.error(error);
+				reject(error);
 				return;
 			}
+			var offset = (page ? page.offset : 0);
 			if ( options.raw ) {
-				columnOrder = printCSV(json.data.results, columnOrder, (offset > 0));
+				columnOrder = printCSV(data, columnOrder, (offset > 0));
 			} else {
-				Array.prototype.push.apply(rawData, json.data.results);
+				Array.prototype.push.apply(rawData, data);
 			}
-			offset = extractOffset(json.data);
 			if ( offset > 0 ) {
-				console.error('Loading data at offset %d...', offset);
-				executeQuery(offset);
-			} else if ( !options.raw ) {
-				complete();
+				console.error('Loaded data at offset %d...', offset);
+			}
+			if ( done ) {
+				if ( !options.raw ) {
+					complete();
+				}
+				resolve(rawData);
 			}
 		});
-	}
+	});
 
-	if ( options.raw ) {
-		console.error('Saving raw data.');
-	}
-
-	executeQuery();
+	Promise.all(promise);
 }
 
 var getopt = new Getopt([
 		['r', 'raw', 'output raw, unaggregated results'],
+		['n', 'node=ID', 'the node ID'],
+		['p', 'source=ID+', 'a source ID (can be provided more than once)'],
+		['s', 'start=DATE', 'the starting date, as yyyy-MM-dd HH:mm'],
+		['e', 'end=DATE', 'the ending date, as yyyy-MM-dd HH:mm'],
+		['a', 'aggregation=AGG', 'the aggregate level, e.g. Hour'],
 		['h', 'help', 'show this help']
 	]).bindHelp(
-	  "Usage: node sn-agg-query.js [OPTION] url\n" +
+	  "Usage: node sn-agg-query.js [OPTION] query\n" +
 	  "\n" +
 	  "Combine query results by date, adding their values together.\n" +
 	  "Alternatively, can output the raw data without aggregation.\n" +
@@ -133,9 +163,5 @@ var getopt = new Getopt([
 
 var options = getopt.parseSystem();
 
-if ( !options.argv.length ) {
-	getopt.showHelp();
-	return;
-}
-
 query(options.argv[0], options.options);
+
