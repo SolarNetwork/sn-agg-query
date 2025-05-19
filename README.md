@@ -1,5 +1,9 @@
 # SolarNetwork Aggregate Query Tool
 
+> :warning: **Note** This project is no longer maintained. See the 
+> [SolarNetwork/solarnetwork-example-node-datum-loader](https://github.com/SolarNetwork/solarnetwork-example-node-datum-loader)
+> project for an example Node CLI tool that queries for SolarNetwork data.
+
 This is a small node utility that can export SolarNetwork data as CSV,
 aggregated by date. The tool will query SolarNetwork for data based
 on the provided arguments, and then combine all result rows that 
